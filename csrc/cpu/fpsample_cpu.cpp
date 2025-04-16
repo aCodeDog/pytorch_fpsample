@@ -13,8 +13,7 @@ using torch::Tensor;
 
 std::tuple<Tensor, Tensor> sample_cpu(const Tensor &x, int64_t k,
                                       torch::optional<int64_t> h,
-                                      torch::optional<int64_t> start_idx,
-                                      c10::string_view backend) {
+                                      torch::optional<int64_t> start_idx) {
     TORCH_CHECK(x.device().is_cpu(), "x must be a CPU tensor, but found on ",
                 x.device());
     TORCH_CHECK(x.dim() >= 2,
@@ -25,39 +24,35 @@ std::tuple<Tensor, Tensor> sample_cpu(const Tensor &x, int64_t k,
 
     auto height = h.value_or(5);
 
-    auto tmp = torch::randint(0, x_reshaped.size(-2), {1},
-                              x_reshaped.options().dtype(torch::kInt64));
-    auto cur_start_idx = start_idx.value_or(tmp.const_data_ptr<int64_t>()[0]);
+    torch::Tensor cur_start_idx;
+    if (start_idx.has_value()) {
+        cur_start_idx = torch::ones({x_reshaped.size(0)},
+                                    x_reshaped.options().dtype(torch::kInt64)) *
+                        start_idx.value();
+    } else {
+        cur_start_idx =
+            torch::randint(0, x_reshaped.size(-2), {x_reshaped.size(0)},
+                           x_reshaped.options().dtype(torch::kInt64));
+    }
 
     Tensor ret_indices = torch::empty(
         {x_reshaped.size(0), k}, x_reshaped.options().dtype(torch::kInt64));
 
-    using FuncType = void (*)(const float *, size_t, size_t, size_t, size_t,
-                              size_t, int64_t *);
-
-    FuncType backend_func;
-    if (backend == "bucket") {
-        backend_func = &bucket_fps_kdline;
-    } else if (backend == "naive") {
-        // TODO: naive
-        TORCH_CHECK(false, "Not implemented yet");
-    } else {
-        TORCH_CHECK(false, "Unknown backend: ", backend);
-    }
-
     if (x_reshaped.size(0) == 1) {
         // single batch
-        backend_func(x_reshaped.const_data_ptr<float>(), x_reshaped.size(1),
-                     x_reshaped.size(2), k, cur_start_idx, height,
-                     ret_indices.mutable_data_ptr<int64_t>());
+        bucket_fps_kdline(x_reshaped.const_data_ptr<float>(),
+                          x_reshaped.size(1), x_reshaped.size(2), k,
+                          cur_start_idx.const_data_ptr<int64_t>()[0], height,
+                          ret_indices.mutable_data_ptr<int64_t>());
     } else {
         torch::parallel_for(
             0, x_reshaped.size(0), 0, [&](int64_t start, int64_t end) {
                 for (auto i = start; i < end; i++) {
-                    backend_func(x_reshaped[i].const_data_ptr<float>(),
-                                 x_reshaped.size(1), x_reshaped.size(2), k,
-                                 cur_start_idx, height,
-                                 ret_indices[i].mutable_data_ptr<int64_t>());
+                    bucket_fps_kdline(
+                        x_reshaped[i].const_data_ptr<float>(),
+                        x_reshaped.size(1), x_reshaped.size(2), k,
+                        cur_start_idx.const_data_ptr<int64_t>()[i], height,
+                        ret_indices[i].mutable_data_ptr<int64_t>());
                 }
             });
     }

@@ -45,7 +45,12 @@ void kdline_sample(const float *raw_data, size_t n_points, size_t dim,
     KDLineTree<T, DIM, S> tree(points.data(), n_points, height,
                                sampled_points.get());
     tree.buildKDtree();
-    tree.init(points[start_idx]);
+    // NOTE: points are shuffled after building KDTree
+    // we have to locate the start points by its ID
+    auto start_point =
+        *std::find_if(points.begin(), points.end(),
+                      [=](auto &p) { return p.id == start_idx; });
+    tree.init(start_point);
     tree.sample(n_samples);
     for (size_t i = 0; i < n_samples; i++) {
         sampled_point_indices[i] = sampled_points[i].id;
@@ -80,7 +85,10 @@ void kdline_sample_varlen(const float *raw_data, size_t n_points, size_t dim,
     quickfps::dynamic::KDLineTree<T, S> tree(points.data(), n_points, height,
                                              sampled_points.data());
     tree.buildKDtree();
-    tree.init(points[start_idx]);
+    auto start_point =
+        *std::find_if(points.begin(), points.end(),
+                      [=](auto &p) { return p.id == start_idx; });
+    tree.init(start_point);
     tree.sample(n_samples);
     for (size_t i = 0; i < n_samples; i++) {
         sampled_point_indices[i] = sampled_points[i].id;

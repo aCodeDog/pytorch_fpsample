@@ -5,8 +5,7 @@ using torch::Tensor;
 
 std::tuple<Tensor, Tensor> sample_meta(const Tensor &x, int64_t k,
                                        torch::optional<int64_t> h,
-                                       torch::optional<int64_t> start_idx,
-                                       c10::string_view backend) {
+                                       torch::optional<int64_t> start_idx) {
     TORCH_CHECK(x.dim() >= 2,
                 "x must have at least 2 dims, but got size: ", x.sizes());
     TORCH_CHECK(k >= 1, "k must be greater than or equal to 1, but got ", k);

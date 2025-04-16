@@ -10,8 +10,7 @@
 #define STR(x) STR_(x)
 
 TORCH_LIBRARY(torch_fpsample, m) {
-    m.def("sample(Tensor self, int k, int? h=None, int? start_idx=None, str "
-          "backend=\"bucket\") -> (Tensor, Tensor)");
+    m.def("sample(Tensor self, int k, int? h=None, int? start_idx=None) -> (Tensor, Tensor)");
 }
 
 PYBIND11_MODULE(_core, m) {
