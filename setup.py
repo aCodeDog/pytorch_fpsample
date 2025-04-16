@@ -18,6 +18,7 @@ sources = [
     "csrc/cpu/bucket_fps/wrapper.cpp",
 ]
 extra_compile_args = {"cxx": ["-O3"]}
+extra_link_args = []
 
 # OpenMP
 info = parallel_info()
@@ -38,17 +39,9 @@ if sys.platform == "darwin":
         extra_link_args += ["-arch", "arm64"]
 
 
-if not WITH_CUDA:
-    ext_modules = [
-        cpp_extension.CppExtension(
-            name="torch_fpsample._core",
-            include_dirs=["csrc"],
-            sources=sources,
-            extra_compile_args=extra_compile_args,
-        )
-    ]
-else:
+if WITH_CUDA:
     # TODO
+    raise NotImplementedError("CUDA is not supported yet.")
     sources += []
     ext_modules = [
         cpp_extension.CUDAExtension(
@@ -56,6 +49,17 @@ else:
             include_dirs=["csrc"],
             sources=sources,
             extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+        )
+    ]
+else:
+    ext_modules = [
+        cpp_extension.CppExtension(
+            name="torch_fpsample._core",
+            include_dirs=["csrc"],
+            sources=sources,
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
         )
     ]
 
