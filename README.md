@@ -34,9 +34,6 @@ sampled_points, indices = torch_fpsample.sample(x, 1024, start_idx=0)
 Size([64, 1024, 3]), Size([64, 1024])
 ```
 
-> [!WARNING]
-> Note: The GPU version is not implemented yet. Only CPU mode is available.
-
 ## Reference
 Bucket-based farthest point sampling (QuickFPS) is proposed in the following paper. The implementation is based on the author's Repo ([CPU](https://github.com/hanm2019/bucket-based_farthest-point-sampling_CPU) & [GPU](https://github.com/hanm2019/bucket-based_farthest-point-sampling_GPU)).
 ```bibtex
