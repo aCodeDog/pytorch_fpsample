@@ -11,7 +11,7 @@ PyTorch efficient farthest point sampling (FPS) implementation, adopted from [fp
 
 ```bash
 # Install from github
-pip install git+https://github.com/leonardodalinky/pytorch_fpsample
+pip install git+https://github.com/aCodeDog/pytorch_fpsample.git
 
 # Build locally
 pip install .
